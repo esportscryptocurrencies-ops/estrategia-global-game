@@ -9,7 +9,7 @@ export default function HomePage() {
           El juego de estrategia con 193 jugadores por partida
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <a
             href="/auth/login"
             className="bg-green-500 text-white text-center py-4 rounded-lg hover:bg-green-600"
@@ -22,6 +22,23 @@ export default function HomePage() {
           >
             Registrarme
           </a>
+          <a
+            href="/lobby"
+            className="bg-purple-500 text-white text-center py-4 rounded-lg hover:bg-purple-600"
+          >
+            Entrar al Lobby
+          </a>
+        </div>
+
+        <div className="mt-8 bg-white p-6 rounded-lg shadow">
+          <h2 className="text-xl font-semibold mb-4">¿Cómo funciona?</h2>
+          <ul className="list-disc pl-6 space-y-2">
+            <li>193 jugadores por partida</li>
+            <li>Ubicados en diferentes países</li>
+            <li>Turnos con anuncios para financiar premios</li>
+            <li>Sistema de tarjetas y estrategia</li>
+            <li>Premios para ganadores</li>
+          </ul>
         </div>
       </div>
     </div>
