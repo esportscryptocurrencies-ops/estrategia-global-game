@@ -2,11 +2,15 @@
 
 import { useState, useEffect } from "react";
 import MapComponent from "@/components/Map/MapComponent";
+import CardInventory from "@/components/Game/CardInventory";
+import { PlayerCard } from "@/types/cards";
+import { CARDS } from "@/data/cards";
 
 export default function GamePage() {
   const [players, setPlayers] = useState<any[]>([]);
   const [currentTurn, setCurrentTurn] = useState(1);
   const [gameStatus, setGameStatus] = useState<"waiting" | "playing" | "ended">("waiting");
+  const [playerCards, setPlayerCards] = useState<PlayerCard[]>([]);
 
   useEffect(() => {
     // Simulación de carga de jugadores
@@ -17,7 +21,20 @@ export default function GamePage() {
       status: "active",
     }));
     setPlayers(mockPlayers);
+
+    // Simulación de carga de tarjetas del jugador
+    const mockCards: PlayerCard[] = [
+      { ...CARDS[0], quantity: 2 }, // Escudo
+      { ...CARDS[2], quantity: 1 }, // Mina
+      { ...CARDS[4], quantity: 1 }, // Spam
+    ];
+    setPlayerCards(mockCards);
   }, []);
+
+  const handleUseCard = (cardId: string) => {
+    alert(`Usando tarjeta: ${cardId}`);
+    // Aquí iría la lógica para usar la tarjeta
+  };
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -28,14 +45,18 @@ export default function GamePage() {
 
       <div className="flex h-[calc(100vh-80px)]">
         <div className="w-1/4 bg-white p-4 shadow">
-          <h2 className="text-lg font-semibold mb-4">Jugadores</h2>
-          <div className="max-h-96 overflow-y-auto">
-            {players.map((player) => (
-              <div key={player.id} className="py-2 border-b">
-                <p>{player.name}</p>
-                <p className="text-sm text-gray-500">Lat: {player.position.lat.toFixed(4)}, Lng: {player.position.lng.toFixed(4)}</p>
-              </div>
-            ))}
+          <CardInventory cards={playerCards} onUseCard={handleUseCard} />
+          
+          <div className="mt-6">
+            <h2 className="text-lg font-semibold mb-4">Jugadores</h2>
+            <div className="max-h-64 overflow-y-auto">
+              {players.map((player) => (
+                <div key={player.id} className="py-2 border-b">
+                  <p>{player.name}</p>
+                  <p className="text-sm text-gray-500">Lat: {player.position.lat.toFixed(4)}, Lng: {player.position.lng.toFixed(4)}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
