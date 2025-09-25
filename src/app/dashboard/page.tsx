@@ -58,6 +58,24 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
+
+        <div className="mt-6">
+          <h3 className="text-lg font-semibold mb-2">Navegación</h3>
+          <div className="space-y-2">
+            <a 
+              href="/marketplace" 
+              className="block bg-gray-200 text-gray-800 py-2 px-4 rounded hover:bg-gray-300"
+            >
+              Marketplace
+            </a>
+            <a 
+              href="/lobby" 
+              className="block bg-gray-200 text-gray-800 py-2 px-4 rounded hover:bg-gray-300"
+            >
+              Entrar al Lobby
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   );

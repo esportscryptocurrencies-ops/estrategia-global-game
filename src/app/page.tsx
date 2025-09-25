@@ -9,7 +9,7 @@ export default function HomePage() {
           El juego de estrategia con 193 jugadores por partida
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <a
             href="/auth/login"
             className="bg-green-500 text-white text-center py-4 rounded-lg hover:bg-green-600"
@@ -27,6 +27,12 @@ export default function HomePage() {
             className="bg-purple-500 text-white text-center py-4 rounded-lg hover:bg-purple-600"
           >
             Entrar al Lobby
+          </a>
+          <a
+            href="/marketplace"
+            className="bg-orange-500 text-white text-center py-4 rounded-lg hover:bg-orange-600"
+          >
+            Marketplace
           </a>
         </div>
 
