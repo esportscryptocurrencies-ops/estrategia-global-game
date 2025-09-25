@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
@@ -10,17 +13,50 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [wallet, setWallet] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
 
-    // Aquí irá la lógica para registrar al usuario
-    console.log({ name, age, gender, email, wallet });
+    try {
+      // Registrar usuario en Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
 
-    // Simulamos registro exitoso
-    alert("¡Registro exitoso!");
-    router.push("/dashboard");
+      const user = userCredential.user;
+
+      // Guardar información adicional en Firestore
+      await setDoc(doc(db, "users", user.uid), {
+        name,
+        age: parseInt(age),
+        gender,
+        email,
+        wallet: wallet || null,
+        balance: 0,
+        cards: [],
+        rank: 0,
+        referralCode: generateReferralCode(),
+        referredBy: null,
+        createdAt: new Date(),
+      });
+
+      alert("¡Registro exitoso!");
+      router.push("/dashboard");
+    } catch (error: any) {
+      console.error("Error en el registro:", error);
+      alert("Error en el registro: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateReferralCode = () => {
+    return Math.random().toString(36).substring(2, 10).toUpperCase();
   };
 
   return (
@@ -103,9 +139,10 @@ export default function RegisterPage() {
 
           <button
             type="submit"
-            className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600"
+            className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 disabled:opacity-50"
+            disabled={loading}
           >
-            Registrarme
+            {loading ? "Registrando..." : "Registrarme"}
           </button>
         </form>
       </div>
