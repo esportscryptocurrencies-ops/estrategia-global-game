@@ -1,10 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { auth } from "@/lib/firebase";
+import { onAuthStateChanged, User } from "firebase/auth";
 
 export default function DashboardPage() {
   const [wallet, setWallet] = useState("");
   const [isEditing, setIsEditing] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
+  const router = useRouter();
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user: User | null) => {
+      if (user) {
+        setUserEmail(user.email || "");
+        // Aquí cargarías los datos reales del usuario desde Firestore
+        // Por ahora usamos datos simulados
+      } else {
+        router.push("/auth/login");
+      }
+    });
+
+    return () => unsubscribe();
+  }, [router]);
 
   const handleSaveWallet = () => {
     alert(`Wallet guardada: ${wallet}`);
@@ -18,7 +37,7 @@ export default function DashboardPage() {
       <div className="bg-white p-6 rounded-lg shadow-lg">
         <h2 className="text-xl font-semibold mb-4">Perfil</h2>
         <p><strong>Nombre:</strong> Juan Pérez</p>
-        <p><strong>Email:</strong> juan@example.com</p>
+        <p><strong>Email:</strong> {userEmail}</p>
         <p><strong>Edad:</strong> 25</p>
         <p><strong>Sexo:</strong> Masculino</p>
 
@@ -74,6 +93,15 @@ export default function DashboardPage() {
             >
               Entrar al Lobby
             </a>
+            {/* Solo visible para el administrador (tu email) */}
+            {userEmail === 'e.sports.cryptocurrencies@gmail.com' && (
+              <a 
+                href="/admin" 
+                className="block bg-red-200 text-red-800 py-2 px-4 rounded hover:bg-red-300"
+              >
+                Panel de Administración
+              </a>
+            )}
           </div>
         </div>
       </div>
