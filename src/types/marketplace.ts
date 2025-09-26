@@ -18,9 +18,13 @@ export interface Transaction {
   id: string;
   buyerId: string;
   sellerId: string;
-  itemId: string;
+  itemId?: string;
+  gameId?: string;
   amount: number;
-  type: 'purchase' | 'auction_win' | 'gift';
-  createdAt: Date;
+  type: 'purchase' | 'auction_win' | 'gift' | 'game_prize' | 'admin_fee' | 'donation' | 'maintenance' | 'investment';
+  description: string;
+  timestamp: Date;
   status: 'completed' | 'pending' | 'failed';
+  adminFee?: number; // Solo para transacciones de partida
+  prizePool?: number; // Solo para transacciones de partida
 }

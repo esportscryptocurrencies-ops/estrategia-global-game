@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import { getAdminIncomeSummary, generateCSV, getTransactionsForCSV } from "@/lib/accounting";
 
 export default function AdminPanel() {
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -13,14 +14,17 @@ export default function AdminPanel() {
   const [depositAmount, setDepositAmount] = useState("");
   const [cardToAssign, setCardToAssign] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [adminIncome, setAdminIncome] = useState<number>(0);
+  const [transactionCount, setTransactionCount] = useState<number>(0);
+  const [csvData, setCsvData] = useState<string>("");
   const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        // Aquí verificarías si el usuario es admin (por ahora asumimos que sí)
         setCurrentUser(user);
         loadUsers();
+        loadAdminIncome();
       } else {
         router.push("/auth/login");
       }
@@ -30,23 +34,54 @@ export default function AdminPanel() {
   }, [router]);
 
   const loadUsers = async () => {
-    setIsLoading(true);
+    // Simular carga de usuarios
+    const mockUsers = Array.from({ length: 50 }, (_, i) => ({
+      id: `user${i + 1}`,
+      name: `Usuario ${i + 1}`,
+      email: `usuario${i + 1}@example.com`,
+      age: 18 + (i % 50),
+      gender: i % 2 === 0 ? "Masculino" : "Femenino",
+      balance: Math.floor(Math.random() * 1000),
+      bannedUntil: null,
+      referralCode: `REF${i + 1}`,
+      createdAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000)
+    }));
+    setUsers(mockUsers);
+  };
+
+  const loadAdminIncome = async () => {
     try {
-      // Simular carga de usuarios (en producción usarías Firestore)
-      const mockUsers = Array.from({ length: 50 }, (_, i) => ({
-        id: `user${i + 1}`,
-        name: `Usuario ${i + 1}`,
-        email: `usuario${i + 1}@example.com`,
-        age: 18 + (i % 50),
-        gender: i % 2 === 0 ? "Masculino" : "Femenino",
-        balance: Math.floor(Math.random() * 1000),
-        bannedUntil: null,
-        referralCode: `REF${i + 1}`,
-        createdAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000)
-      }));
-      setUsers(mockUsers);
+      const summary = await getAdminIncomeSummary();
+      setAdminIncome(summary.totalIncome);
+      setTransactionCount(summary.transactionCount);
     } catch (error) {
-      console.error("Error al cargar usuarios:", error);
+      console.error("Error al cargar ingresos:", error);
+    }
+  };
+
+  const handleExportCSV = async () => {
+    try {
+      setIsLoading(true);
+      const transactions = await getTransactionsForCSV();
+      const csv = generateCSV(transactions);
+      setCsvData(csv);
+      
+      // Descargar archivo CSV
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.setAttribute('hidden', '');
+      a.setAttribute('href', url);
+      a.setAttribute('download', `transacciones_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      
+      alert(`CSV exportado con ${transactions.length} transacciones`);
+    } catch (error) {
+      console.error("Error al exportar CSV:", error);
+      alert("Error al exportar CSV");
     } finally {
       setIsLoading(false);
     }
@@ -67,7 +102,6 @@ export default function AdminPanel() {
     }
     
     alert(`Baneo temporal de ${selectedUsers.length} usuarios por 3 horas`);
-    // Aquí iría la lógica real con Firestore
   };
 
   const handleBanPermanent = async () => {
@@ -78,7 +112,6 @@ export default function AdminPanel() {
     
     if (confirm(`¿Estás seguro de banear permanentemente a ${selectedUsers.length} usuarios?`)) {
       alert(`Baneo permanente de ${selectedUsers.length} usuarios`);
-      // Aquí iría la lógica real con Firestore
     }
   };
 
@@ -89,7 +122,6 @@ export default function AdminPanel() {
     }
     
     alert(`Asignando tarjeta "${cardToAssign}" a ${selectedUsers.length} usuarios`);
-    // Aquí iría la lógica real con Firestore
   };
 
   const handleSendNotification = async () => {
@@ -100,7 +132,6 @@ export default function AdminPanel() {
     
     const target = selectedUsers.length > 0 ? "specific" : "all";
     alert(`Enviando notificación a ${target === "all" ? "todos los usuarios" : selectedUsers.length + " usuarios"}`);
-    // Aquí iría la lógica real con Firestore
   };
 
   const handleDepositFunds = async () => {
@@ -116,7 +147,6 @@ export default function AdminPanel() {
     }
     
     alert(`Depositando ${amount} USDT a ${selectedUsers.length} usuarios`);
-    // Aquí iría la lógica real con Firestore
   };
 
   const handleEnrollTournament = async () => {
@@ -126,10 +156,9 @@ export default function AdminPanel() {
     }
     
     alert(`Inscribiendo ${selectedUsers.length} usuarios a torneo especial`);
-    // Aquí iría la lógica real con Firestore
   };
 
-  if (isLoading) {
+  if (isLoading && !currentUser) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <p className="text-xl">Cargando panel de administración...</p>
@@ -141,6 +170,34 @@ export default function AdminPanel() {
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">Panel de Administración</h1>
+        
+        {/* Resumen de ingresos */}
+        <div className="bg-white p-6 rounded-lg shadow mb-6">
+          <h2 className="text-xl font-semibold mb-4">Resumen Financiero</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-green-100 p-4 rounded">
+              <p className="text-green-800 font-semibold">Ingresos Totales</p>
+              <p className="text-2xl font-bold text-green-600">{adminIncome.toFixed(2)} USDT</p>
+            </div>
+            <div className="bg-blue-100 p-4 rounded">
+              <p className="text-blue-800 font-semibold">Partidas Completadas</p>
+              <p className="text-2xl font-bold text-blue-600">{transactionCount}</p>
+            </div>
+            <div className="bg-purple-100 p-4 rounded">
+              <p className="text-purple-800 font-semibold">Ingreso por Partida</p>
+              <p className="text-2xl font-bold text-purple-600">$10 USDT</p>
+            </div>
+          </div>
+          
+          <div className="mt-4">
+            <button
+              onClick={handleExportCSV}
+              className="bg-green-500 text-white py-2 px-6 rounded hover:bg-green-600"
+            >
+              Exportar CSV de Transacciones
+            </button>
+          </div>
+        </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Panel de acciones */}
